@@ -2,11 +2,12 @@
   "version": 2,
   "name": "thq-sillanwali-it-assets",
   "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "api/**/*.js", "use": "@vercel/node" }
+    { "src": "api/**/*.js", "use": "@vercel/node" },
+    { "src": "**/*", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*\\.(js|css|json|png|jpg|svg|ico|woff2?))", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
