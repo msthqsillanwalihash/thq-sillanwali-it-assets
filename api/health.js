@@ -3,6 +3,7 @@ module.exports = function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(204).end();
+  // Try read from global store
   const store = globalThis.__thqStore || { assets: [], users: [], checkins: [], logs: [], meta: {} };
   res.status(200).json({
     ok: true,
