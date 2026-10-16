@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0d9488">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="THQ Sillanwali IT Asset Management System">
 <title>THQ Sillanwali — IT Asset Management</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%230d9488' rx='20' width='100' height='100'/%3E%3Ctext x='50' y='68' font-size='48' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3EIT%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -37,104 +38,8 @@
     <div class="login-hint">Admin PIN: 786 · Staff PIN: 1234</div>
   </div>
 </div>
-<div class="overlay-nav" id="navOverlay" onclick="closeSidebar()"></div>
-<div class="app-shell" id="appShell" style="display:none">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand"><h1>THQ Sillanwali</h1><p>IT Asset Management</p></div>
-    <nav class="sidebar-nav">
-      <button class="active" onclick="showView('dashboard')" id="nav-dashboard"><span class="nav-icon">▣</span> Dashboard</button>
-      <button onclick="showView('assets')" id="nav-assets"><span class="nav-icon">▤</span> Assets</button>
-      <button onclick="showView('users')" id="nav-users" class="admin-only"><span class="nav-icon">◎</span> Users</button>
-      <button onclick="showView('scan')" id="nav-scan"><span class="nav-icon">📷</span> Scan</button>
-      <button onclick="showView('add')" id="nav-add" class="admin-only"><span class="nav-icon">＋</span> Add Asset</button>
-      <button onclick="showView('labels')" id="nav-labels"><span class="nav-icon">▮</span> Labels</button>
-      <button onclick="showView('settings')" id="nav-settings" class="admin-only"><span class="nav-icon">⚙</span> Settings</button>
-    </nav>
-    <div class="sidebar-user"><span id="sessionRole">—</span><button type="button" onclick="logout()">Logout</button></div>
-    <div class="sidebar-foot">Govt. of Punjab · Health Dept.</div>
-  </aside>
-  <div class="main">
-    <header class="topbar">
-      <div style="display:flex;align-items:center;gap:10px">
-        <button class="menu-toggle" type="button" onclick="toggleSidebar()">☰</button>
-        <h2 id="pageTitle">Dashboard</h2>
-      </div>
-      <div class="topbar-actions">
-        <span id="topRoleBadge"></span>
-        <button class="btn btn-ghost btn-sm" type="button" onclick="fullSync()">Sync</button>
-        <button class="btn btn-ghost btn-sm" type="button" onclick="openIPMenu()">IP</button>
-        <button class="btn btn-ghost btn-sm" type="button" id="btnInstall" style="display:none" onclick="installPWA()">Install</button>
-      </div>
-    </header>
-    <div class="content">
-      <div class="install-banner" id="installBanner"><span><strong>Install app</strong></span><button class="btn btn-primary btn-sm" type="button" onclick="installPWA()">Install</button></div>
-      <div id="view-dashboard"><div class="stat-grid" id="statCards"></div>
-        <div class="panel"><div class="panel-hd"><h3>By type</h3></div><div class="panel-bd" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Type</th><th>OK</th><th>NF</th><th>Repair</th><th>Missing</th><th>Total</th></tr></thead><tbody id="typeSummary"></tbody></table></div></div></div>
-        <div class="panel"><div class="panel-hd"><h3>Activity</h3></div><div class="panel-bd" style="padding:0"><div class="table-wrap" style="max-height:260px"><table><thead><tr><th>Time</th><th>Asset</th><th>User</th><th>Action</th><th>GPS</th></tr></thead><tbody id="checkinLogBody"></tbody></table></div></div></div>
-      </div>
-      <div id="view-assets" class="hidden"><div class="panel"><div class="panel-hd"><h3>Assets</h3><button class="btn btn-success btn-sm admin-only" type="button" onclick="showView('add')">+ Add</button></div>
-        <div class="panel-bd"><div class="toolbar"><input id="searchBox" placeholder="Search…" oninput="renderAssetTable()" style="flex:1"><select id="filterType" onchange="renderAssetTable()"><option value="">All types</option><option>Lenovo Laptop</option><option>Desktop PC</option><option>Lenovo Tablet</option></select><select id="filterStatus" onchange="renderAssetTable()"><option value="">All</option><option>Functional</option><option>Non-Functional</option></select></div>
-        <div class="table-wrap"><table><thead><tr><th>#</th><th>ID</th><th>Type</th><th>Location</th><th>User</th><th>Status</th><th>GPS</th><th></th></tr></thead><tbody id="assetTableBody"></tbody></table></div></div></div></div>
-      <div id="view-users" class="hidden"><div class="panel"><div class="panel-hd"><h3>Users</h3><button class="btn btn-success btn-sm" type="button" onclick="openUserForm(-1)">+ Add</button></div>
-        <div class="panel-bd"><div class="toolbar"><input id="userSearch" placeholder="Search…" oninput="renderUsers()" style="flex:1"><select id="filterUserStatus" onchange="renderUsers()"><option value="">All</option><option>Active</option><option>Inactive</option></select></div>
-        <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Desig</th><th>Dept</th><th>Contact</th><th>CNIC</th><th>Status</th><th>N</th><th></th></tr></thead><tbody id="userTableBody"></tbody></table></div></div></div></div>
-      <div id="view-scan" class="hidden"><div class="panel"><div class="panel-hd"><h3>Scan</h3></div><div class="panel-bd">
-        <div class="toolbar"><button class="btn btn-primary" id="btnStartScan" type="button" onclick="startScanner()">Camera</button><button class="btn btn-danger" id="btnStopScan" type="button" onclick="stopScanner()" style="display:none">Stop</button><button class="btn btn-ghost" type="button" onclick="manualCheckin()">Manual</button><button class="btn btn-ghost" type="button" onclick="getGpsOnce()">GPS</button></div>
-        <div id="scannerBox"></div><div id="scanResult" class="hidden"></div><div id="gpsBox" class="info-box hidden"></div><div id="ipBox" class="ip-box hidden"></div></div></div>
-        <div class="panel"><div class="panel-hd"><h3>Recent</h3></div><div class="panel-bd" style="padding:0"><div class="table-wrap" style="max-height:240px"><table><thead><tr><th>Time</th><th>Asset</th><th>Type</th><th>User</th><th>GPS</th></tr></thead><tbody id="todayScansBody"></tbody></table></div></div></div></div>
-      <div id="view-add" class="hidden"><div class="panel"><div class="panel-hd"><h3 id="formTitle">Add asset</h3></div><div class="panel-bd"><form id="assetForm" onsubmit="saveAsset(event)"><input type="hidden" id="editIndex" value="-1">
-        <div class="form-grid">
-          <div class="form-group"><label>ID *</label><input id="f_id" required></div>
-          <div class="form-group"><label>Type *</label><select id="f_type" required onchange="autoCategory()"><option value="">—</option><option>Lenovo Laptop</option><option>Desktop PC</option><option>Lenovo Tablet</option></select></div>
-          <div class="form-group"><label>Cat</label><input id="f_cat" readonly></div>
-          <div class="form-group"><label>Location *</label><input id="f_loc" required list="locList"><datalist id="locList"></datalist></div>
-          <div class="form-group"><label>Brand</label><input id="f_brand"></div>
-          <div class="form-group"><label>IP</label><input id="f_ip"></div>
-          <div class="form-group"><label>MAC</label><input id="f_mac"></div>
-          <div class="form-group"><label>Status</label><select id="f_status"><option>Functional</option><option>Non-Functional</option><option>Under Repair</option><option>Missing</option></select></div>
-          <div class="form-group"><label>Condition</label><select id="f_cond"><option>Excellent</option><option selected>Good</option><option>Fair</option></select></div>
-          <div class="form-group"><label>Serial</label><input id="f_serial"></div>
-          <div class="form-group"><label>User</label><select id="f_userId"><option value="">—</option></select></div>
-          <div class="form-group"><label>Issue</label><input type="date" id="f_issue"></div>
-          <div class="form-group"><label>Checked</label><input type="date" id="f_checked"></div>
-          <div class="form-group"><label>Purchase</label><input type="date" id="f_purchase"></div>
-          <div class="form-group"><label>Warranty</label><input type="date" id="f_warranty"></div>
-          <div class="form-group"><label>Tag</label><select id="f_tag"><option>Yes</option><option>No</option></select></div>
-          <div class="form-group" style="grid-column:1/-1"><label>Remarks</label><textarea id="f_remarks" rows="2"></textarea></div>
-        </div>
-        <div class="modal-actions"><button type="button" class="btn btn-ghost" onclick="showView('assets')">Cancel</button><button type="button" class="btn btn-warning" onclick="autoGenerateId()">Auto ID</button><button type="submit" class="btn btn-primary">Save</button></div></form></div></div></div>
-      <div id="view-labels" class="hidden"><div class="panel"><div class="panel-hd"><h3>Labels</h3><select id="labelFilterType" onchange="renderLabels()"><option value="">All</option><option>Lenovo Laptop</option><option>Desktop PC</option><option>Lenovo Tablet</option></select> <select id="labelFilterStatus" onchange="renderLabels()"><option value="">All</option><option selected>Functional</option></select> <button class="btn btn-primary btn-sm" type="button" onclick="window.print()">Print</button></div><div class="panel-bd"><div id="labelSection" class="active"><div class="labels-grid" id="labelsGrid"></div></div></div></div></div>
-      <div id="view-settings" class="hidden">
-        <div class="panel"><div class="panel-hd"><h3>Settings</h3></div><div class="panel-bd"><div class="form-grid">
-          <div class="form-group"><label>Hospital</label><input id="set_hospital"></div>
-          <div class="form-group"><label>Default status</label><select id="set_defaultStatus"><option>Functional</option><option>Non-Functional</option></select></div>
-          <div class="form-group"><label>Staff PIN</label><input type="password" id="set_staffPin" maxlength="8"></div>
-          <div class="form-group"><label>Auto IP</label><select id="set_autoIP"><option value="yes">Yes</option><option value="no">No</option></select></div>
-          <div class="form-group"><label>Auto GPS</label><select id="set_autoGPS"><option value="yes">Yes</option><option value="no">No</option></select></div>
-          <div class="form-group"><label>Offer lock</label><select id="set_offerLock"><option value="yes">Yes</option><option value="no">No</option></select></div>
-          <div class="form-group"><label>Operator</label><input id="set_operator"></div>
-        </div><p style="font-size:12px;margin-top:8px">Admin PIN: <strong>786</strong></p><button class="btn btn-primary" type="button" onclick="saveSettings()">Save</button></div></div>
-        <div class="panel"><div class="panel-hd"><h3>Server</h3></div><div class="panel-bd">
-          <div class="form-group"><label>Server URL</label><input id="set_serverUrl" placeholder="https://thq-sillanwali-it-assets.vercel.app"></div>
-          <div class="form-grid" style="margin-top:8px">
-            <div class="form-group"><label>Auto-fetch</label><select id="set_autoFetch"><option value="yes">Yes</option><option value="no">No</option></select></div>
-            <div class="form-group"><label>Interval</label><select id="set_syncInterval"><option value="0">Off</option><option value="5">5 min</option></select></div>
-            <div class="form-group"><label>Mode</label><select id="set_syncMode"><option value="pull">Pull</option><option value="push">Push</option></select></div>
-          </div>
-          <div id="serverStatus" class="info-box" style="margin-top:10px">—</div>
-          <div class="toolbar" style="margin-top:10px"><button class="btn btn-primary" type="button" onclick="testServer()">Test</button><button class="btn btn-success" type="button" onclick="pullFromServer()">Pull</button><button class="btn btn-warning" type="button" onclick="pushToServer()">Push</button></div>
-        </div></div>
-        <div class="panel"><div class="panel-hd"><h3>IP</h3></div><div class="panel-bd"><button class="btn btn-primary" type="button" onclick="fetchMyIP()">Fetch IP</button> <button class="btn btn-ghost" type="button" onclick="copyIP('public')">Copy</button><div id="ipBoxSettings" class="ip-box">—</div>
-          <div class="toolbar" style="margin-top:10px"><select id="ipTargetAsset" style="flex:1"></select><button class="btn btn-success btn-sm" type="button" onclick="applyIPFromMenu('public')">Set</button><button class="btn btn-ghost btn-sm" type="button" onclick="applyIPFromMenu('manual')">Manual</button></div></div></div>
-        <div class="panel"><div class="panel-hd"><h3>Data</h3></div><div class="panel-bd"><button class="btn btn-ghost" type="button" onclick="exportCSV()">Export assets</button> <button class="btn btn-ghost" type="button" onclick="exportUsersCSV()">Export users</button></div></div>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="modal-overlay" id="userModal"><div class="modal"><h3 id="userFormTitle">User</h3><form onsubmit="saveUser(event)"><input type="hidden" id="userEditIdx" value="-1"><div class="form-grid"><div class="form-group"><label>ID</label><input id="u_id" required></div><div class="form-group"><label>Name</label><input id="u_name" required></div><div class="form-group"><label>Desig</label><input id="u_desig"></div><div class="form-group"><label>Dept</label><input id="u_dept" list="deptList"><datalist id="deptList"></datalist></div><div class="form-group"><label>Contact</label><input id="u_contact"></div><div class="form-group"><label>CNIC</label><input id="u_cnic"></div><div class="form-group"><label>Email</label><input type="email" id="u_email"></div><div class="form-group"><label>Type</label><select id="u_type"><option>Regular</option><option>Contract</option></select></div><div class="form-group"><label>Status</label><select id="u_status"><option>Active</option><option>Inactive</option></select></div><div class="form-group" style="grid-column:1/-1"><label>Remarks</label><textarea id="u_remarks" rows="2"></textarea></div></div><div class="modal-actions"><button type="button" class="btn btn-ghost" onclick="closeUserModal()">Cancel</button><button type="button" class="btn btn-warning" onclick="autoUserId()">Auto ID</button><button type="submit" class="btn btn-primary">Save</button></div></form></div></div>
-<div class="modal-overlay" id="assignModal"><div class="modal"><h3>Assign</h3><p id="assignAssetInfo"></p><div class="form-group"><label>User</label><select id="assignUserSelect" style="width:100%"></select></div><div class="form-group"><label>Action</label><select id="assignAction" style="width:100%"><option>Assigned</option><option>Returned</option></select></div><div class="form-group"><label>Remarks</label><input id="assignRemarks" style="width:100%"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" onclick="closeAssignModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="confirmAssign()">OK</button></div></div></div>
-<div class="modal-overlay" id="ipMenuModal"><div class="modal"><h3>IP</h3><div id="ipMenuStatus" class="ip-box">—</div><div class="form-group"><label>Asset</label><select id="ipMenuAsset" style="width:100%"></select></div><div class="modal-actions"><button type="button" class="btn btn-ghost" onclick="closeIPMenu()">Close</button><button type="button" class="btn btn-success" onclick="applyIPFromIPMenu('public')">Set public</button><button type="button" class="btn btn-primary" onclick="applyIPFromIPMenu('manual')">Manual</button></div></div></div>
-<script src="app-p1.js"></script>
-<script src="app-p2.js"></script>
+<script src="app1.js"></script>
+<script src="app2.js"></script>
+<script src="app3.js"></script>
 </body>
 </html>
