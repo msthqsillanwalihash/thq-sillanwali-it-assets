@@ -1,14 +1,20 @@
-# THQ Sillanwali IT Asset Management
+# THQ Sillanwali IT Asset Manager
 
-Web PWA for THQ Hospital Sillanwali IT inventory.
+Complete single-file HTML app with all functions.
 
-- Open the Vercel URL
-- Admin PIN: `786`
-- Staff PIN: `1234` (changeable in Settings)
+**Live:** https://thq-sillanwali-it-assets.vercel.app
 
-## API
+**Login:** Admin PIN `786` · Staff PIN `1234`
 
-- `GET /api/health`
-- `GET|POST /api/sync`
+## Features
+- Dashboard & inventory
+- Asset CRUD
+- User assignment
+- Barcode/QR scan + GPS check-in
+- IP menu
+- Printable barcode labels
+- Server sync (Vercel API or local Python)
+- PWA installable
 
-Server URL in app Settings: your Vercel URL (no trailing slash).
+## Deploy
+Push `index.html` (standalone) + `api/` folder. All app logic is inside index.html — no external app.js needed.
