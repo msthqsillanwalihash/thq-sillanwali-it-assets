@@ -1,14 +1,80 @@
+function startScanner(){
+  if(typeof Html5Qrcode==='undefined'){alert('Scanner library loading… try again in 2 sec');return;}
+  const box=document.getElementById('scannerBox');
+  if(!box)return;
+  document.getElementById('btnStartScan').style.display='none';
+  document.getElementById('btnStopScan').style.display='inline-flex';
+  if(!window.html5QrCode)window.html5QrCode=new Html5Qrcode('scannerBox');
+  window.html5QrCode.start({facingMode:'environment'},{fps:10,qrbox:{width:250,height:250}},onScanSuccess,()=>{}).catch(e=>{alert('Camera error: '+e);stopScanner();});
+}
+function stopScanner(){
+  if(window.html5QrCode){try{window.html5QrCode.stop().then(()=>window.html5QrCode.clear()).catch(()=>{});}catch(e){}}
+  const b1=document.getElementById('btnStartScan'),b2=document.getElementById('btnStopScan');
+  if(b1)b1.style.display='inline-flex';if(b2)b2.style.display='none';
+}
+function onScanSuccess(decodedText){
+  stopScanner();
+  processCheckin(decodedText);
+}
+function processCheckin(code){
+  const id=(code||'').trim();
+  if(!id)return;
+  let a=assets.find(x=>x.id===id);
+  const box=document.getElementById('scanResult');
+  if(!a){
+    if(box){box.classList.remove('hidden');box.innerHTML=`<div class="info-box"><strong>Not found:</strong> ${id}<br><button class="btn btn-primary btn-sm" onclick="addFromScan('${id.replace(/'/g,"\\'")}')">Add as new asset</button></div>`;}
+    return;
+  }
+  a.lastScan=new Date().toLocaleString();
+  if(lastGps.lat){a.lat=lastGps.lat;a.lng=lastGps.lng;}
+  const u=userById(a.userId);
+  checkins.unshift({time:a.lastScan,assetId:a.id,type:a.type,userName:u?u.name:'—',lat:a.lat,lng:a.lng});
+  logs.unshift({time:a.lastScan,assetId:a.id,user:a.userId||'',userName:u?u.name:'—',action:'Scan check-in',lat:a.lat,lng:a.lng});
+  if(checkins.length>200)checkins.length=200;
+  if(logs.length>500)logs.length=500;
+  saveData();
+  if(box){box.classList.remove('hidden');box.innerHTML=`<div class="info-box success"><strong>${a.id}</strong> · ${a.type}<br>Location: ${a.loc||'—'} · User: ${u?u.name:'—'}<br>GPS: ${a.lat?a.lat.toFixed(5)+', '+a.lng.toFixed(5):'—'}<br><button class="btn btn-ghost btn-sm" onclick="openAssign(${assets.indexOf(a)})">Assign user</button> <button class="btn btn-ghost btn-sm" onclick="editAsset(${assets.indexOf(a)})">Edit</button></div>`;}
+  renderTodayScans();
+  if(getSettings().offerLock==='yes'&&lastGps.lat&&!a.locationLocked){
+    if(confirm('Lock GPS location for this asset?'))lockAssetLocation(assets.indexOf(a));
+  }
+}
+function addFromScan(id){
+  showView('add');
+  document.getElementById('f_id').value=id;
+}
+function manualCheckin(){
+  const id=prompt('Enter Asset ID');
+  if(id)processCheckin(id);
+}
+function renderTodayScans(){
+  const tb=document.getElementById('todayScansBody');
+  if(!tb)return;
+  const list=checkins.slice(0,30);
+  tb.innerHTML=list.length?list.map(c=>`<tr><td>${c.time||''}</td><td>${c.assetId||''}</td><td>${c.type||''}</td><td>${c.userName||'—'}</td><td>${typeof mapsLink==='function'?mapsLink(c.lat,c.lng):(c.lat||'—')}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">No scans yet</td></tr>';
+}
+function renderLabels(){
+  const grid=document.getElementById('labelsGrid');
+  if(!grid)return;
+  const ft=document.getElementById('labelFilterType')?.value||'';
+  const fs=document.getElementById('labelFilterStatus')?.value||'';
+  let list=assets.filter(a=>{
+    if(ft&&a.type!==ft)return false;
+    if(fs&&a.status!==fs)return false;
+    return true;
+  });
+  grid.innerHTML=list.map((a,i)=>`<div class="label-card"><div class="label-id">${a.id}</div><div class="label-type">${a.type||''}</div><div class="label-loc">${a.loc||''}</div><svg id="bc_${i}"></svg></div>`).join('')||'<p class="empty">No assets</p>';
+  list.forEach((a,i)=>{try{if(typeof JsBarcode!=='undefined')JsBarcode('#bc_'+i,a.id,{format:'CODE128',width:1.1,height:28,displayValue:false,margin:2});}catch(e){}});
+}
+function exportCSV(){
+  const headers=['Asset ID','Type','Location','User ID','User Name','IP','MAC','Status','Serial','GPS Lat','GPS Lng','Locked','Last Scan'];
+  const rows=assets.map(a=>{const u=userById(a.userId);return [a.id,a.type,a.loc,a.userId,u?.name||'',a.ip,a.mac,a.status,a.serial,a.lat,a.lng,a.locationLocked?'Yes':'No',a.lastScan].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',');});
+  const blob=new Blob([[headers.join(',')].concat(rows).join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='THQ_IT_Assets.csv';a.click();
+}
+function exportUsersCSV(){
+  const headers=['User ID','Name','Designation','Department','Contact','CNIC','Email','Type','Status'];
+  const rows=users.map(u=>[u.id,u.name,u.desig,u.dept,u.contact,u.cnic,u.email,u.type,u.status].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(','));
+  const blob=new Blob([[headers.join(',')].concat(rows).join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='THQ_IT_Users.csv';a.click();
+}
 
-function copyIP(which){const v=which==='public'?myPublicIP:myLocalIP;if(!v){alert('No IP yet — click Fetch IP');return;}navigator.clipboard.writeText(v).then(()=>alert('Copied: '+v)).catch(()=>prompt('Copy:',v));}
-function applyIPFromMenu(mode){const id=document.getElementById('ipTargetAsset')?.value;if(!id){alert('Select an asset');return;}const a=assets.find(x=>x.id===id);if(!a)return;if(mode==='public'){if(!myPublicIP){alert('Fetch public IP first');return;}a.ip=myPublicIP;}else if(mode==='local'){if(!myLocalIP){alert('Local IP not detected');return;}a.ip=myLocalIP;}else{const v=prompt('Enter IP for '+a.id,a.ip||'');if(v===null)return;a.ip=v.trim();}saveData();alert('IP set to '+a.ip);if(!document.getElementById('view-assets').classList.contains('hidden'))renderAssetTable();}
-function openIPMenu(){refreshIPMenu();document.getElementById('ipMenuModal').classList.add('show');}
-function closeIPMenu(){document.getElementById('ipMenuModal').classList.remove('show');}
-function refreshIPMenu(){const st=document.getElementById('ipMenuStatus');if(st)st.innerHTML=`Public: <code>${myPublicIP||'—'}</code><br>Local: <code>${myLocalIP||'—'}</code>`;const sel=document.getElementById('ipMenuAsset');if(sel){const cur=sel.value;sel.innerHTML=assets.map(a=>`<option value="${a.id}">${a.id} — ${a.type||''} (${a.ip||'no IP'})</option>`).join('');if(cur)sel.value=cur;}}
-function applyIPFromIPMenu(mode){const id=document.getElementById('ipMenuAsset')?.value;if(!id){alert('Select asset');return;}const a=assets.find(x=>x.id===id);if(!a)return;if(mode==='public'){if(!myPublicIP){alert('Fetch IP first');return;}a.ip=myPublicIP;}else if(mode==='local'){if(!myLocalIP){alert('Local IP not available');return;}a.ip=myLocalIP;}else{const v=prompt('IP for '+a.id,a.ip||'');if(v===null)return;a.ip=v.trim();}saveData();refreshIPMenu();alert('IP set: '+a.ip);}
-async function testServer(){try{updateServerStatusUI('Testing…');const j=await apiGet('/api/health');lastServerOk=true;updateServerStatusUI('✅ Connected · '+j.service+(j.counts?` · ${j.counts.assets} assets`:'')+(j.note?'<br><small>'+j.note+'</small>':''));}catch(e){lastServerOk=false;updateServerStatusUI('❌ '+e.message);}}
-async function pullFromServer(silent){try{if(!serverBase()){if(!silent)alert('Set Server URL first');return false;}if(!silent)updateServerStatusUI('Pulling…');const j=await apiGet('/api/sync');if(Array.isArray(j.assets))assets=j.assets;if(Array.isArray(j.users))users=j.users;if(Array.isArray(j.checkins))checkins=j.checkins;if(Array.isArray(j.logs))logs=j.logs;saveData();lastServerOk=true;if(!silent){updateServerStatusUI('✅ Pulled · '+assets.length+' assets');renderDashboard();renderAssetTable();alert('Data downloaded from server.');}return true;}catch(e){lastServerOk=false;if(!silent){updateServerStatusUI('❌ Pull failed: '+e.message);alert('Pull failed: '+e.message);}return false;}}
-async function pushToServer(silent){try{if(!serverBase()){if(!silent)alert('Set Server URL first');return false;}if(!silent)updateServerStatusUI('Pushing…');const j=await apiPost('/api/sync',{assets,users,checkins,logs});lastServerOk=true;if(!silent){updateServerStatusUI('✅ Pushed · '+(j.counts?.assets??assets.length)+' assets');alert('Data uploaded.');}return true;}catch(e){lastServerOk=false;if(!silent){updateServerStatusUI('❌ Push failed: '+e.message);alert('Push failed: '+e.message);}return false;}}
-async function fullSync(){const mode=getSettings().syncMode||'pull';if(mode==='push')await pushToServer();else await pullFromServer();}
-function setupAutoSync(){if(syncTimer){clearInterval(syncTimer);syncTimer=null;}const mins=parseInt(getSettings().syncInterval||'0',10);if(!mins||!serverBase())return;syncTimer=setInterval(()=>{const mode=getSettings().syncMode||'pull';if(mode==='push')pushToServer(true);else pullFromServer(true);},mins*60*1000);}
-async function autoFetchOnLogin(){const s=getSettings();if(s.autoFetch==='yes'&&s.serverUrl)await pullFromServer(true);setupAutoSync();updateServerStatusUI();}
 checkSession();
